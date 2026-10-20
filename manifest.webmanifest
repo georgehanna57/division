@@ -1,0 +1,20 @@
+{
+  "name": "تقسيم حصة السجائر",
+  "short_name": "تقسيم الحصة",
+  "description": "حاسبة بتقسم البضاعة الأسبوعية (كرتونة / خرطوشة / علبة) على الشركاء حسب نسبة كل واحد.",
+  "lang": "ar",
+  "dir": "rtl",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f1ec",
+  "theme_color": "#8a3b1f",
+  "categories": ["business", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

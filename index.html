@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>تقسيم حصة السجائر</title>
+  <meta name="description"
+    content="حاسبة بتقسم البضاعة الأسبوعية (كرتونة / خرطوشة / علبة) على الشركاء حسب نسبة كل واحد.">
+  <meta name="theme-color" content="#8a3b1f">
+  <meta name="color-scheme" content="light dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="تقسيم الحصة">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@600;700&display=swap">
+  <style>
+    /* Layout: one column of three working panels (partners, received goods, result), result grouped per partner for hand-out */
+    :root {
+      --bg: #f3f1ec;
+      --surface: #fffdf8;
+      --ink: #1f1d1a;
+      --muted: #6c675e;
+      --line: #ddd7cb;
+      --accent: #8a3b1f;
+      --accent-soft: #f2e3da;
+      --ok: #2f6b3a;
+      --warn: #a35b00;
+      --warn-soft: #fbecd5;
+      --display: "Reem Kufi", "IBM Plex Sans Arabic", Tahoma, sans-serif;
+      --body: "IBM Plex Sans Arabic", Tahoma, "Segoe UI", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #171513;
+        --surface: #211e1b;
+        --ink: #efe9df;
+        --muted: #a59e92;
+        --line: #3a352f;
+        --accent: #e08a62;
+        --accent-soft: #3a2519;
+        --ok: #7cc48a;
+        --warn: #f0b05a;
+        --warn-soft: #3a2a12;
+        color-scheme: dark
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #171513;
+      --surface: #211e1b;
+      --ink: #efe9df;
+      --muted: #a59e92;
+      --line: #3a352f;
+      --accent: #e08a62;
+      --accent-soft: #3a2519;
+      --ok: #7cc48a;
+      --warn: #f0b05a;
+      --warn-soft: #3a2a12;
+      color-scheme: dark
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: var(--bg)
+    }
+
+    body {
+      margin: 0;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    input,
+    select {
+      font-size: 16px
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.6;
+      direction: rtl;
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+      padding-block: 24px 48px
+    }
+
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px
+    }
+
+    header h1 {
+      font-family: var(--display);
+      font-size: 1.9rem;
+      margin: 0;
+      color: var(--accent);
+      text-wrap: balance
+    }
+
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted)
+    }
+
+    .units {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px
+    }
+
+    .chip {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 2px 12px;
+      font-size: .85rem;
+      font-weight: 600
+    }
+
+    section {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 18px
+    }
+
+    section h2 {
+      font-family: var(--display);
+      font-size: 1.2rem;
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .row {
+      display: grid;
+      gap: 8px;
+      align-items: center
+    }
+
+    .row.partner {
+      grid-template-columns: 1fr 110px 36px
+    }
+
+    .row.item {
+      grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)) 36px
+    }
+
+    .head {
+      font-size: .78rem;
+      color: var(--muted);
+      letter-spacing: .02em
+    }
+
+    input,
+    select {
+      font: inherit;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 7px 10px;
+      width: 100%;
+      min-width: 0
+    }
+
+    input[type=number] {
+      font-variant-numeric: tabular-nums;
+      text-align: center
+    }
+
+    input:focus-visible,
+    select:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px
+    }
+
+    .pct {
+      position: relative
+    }
+
+    .pct input {
+      padding-left: 24px
+    }
+
+    .pct span {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      padding: 7px 14px
+    }
+
+    button.add {
+      border-style: dashed;
+      color: var(--accent);
+      align-self: flex-start
+    }
+
+    button.del {
+      padding: 0;
+      width: 36px;
+      height: 36px;
+      color: var(--muted);
+      font-size: 1.2rem;
+      line-height: 1
+    }
+
+    button.del:hover {
+      color: var(--accent);
+      border-color: var(--accent)
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: var(--surface);
+      border-color: var(--accent);
+      font-weight: 600
+    }
+
+    .total {
+      font-size: .9rem;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .total.good {
+      color: var(--ok);
+      background: transparent;
+      border: 1px solid var(--ok)
+    }
+
+    .total.bad {
+      color: var(--warn);
+      background: var(--warn-soft)
+    }
+
+    .opts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+      font-size: .9rem;
+      color: var(--muted)
+    }
+
+    .opts select {
+      width: auto
+    }
+
+    .itotal {
+      font-size: .8rem;
+      color: var(--muted);
+      grid-column: 1/-1;
+      margin-top: -4px;
+      padding-inline-start: 4px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 14px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px
+    }
+
+    .card h3 small {
+      color: var(--accent);
+      font-weight: 600
+    }
+
+    .card ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px
+    }
+
+    .card li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px dashed var(--line);
+      padding-bottom: 4px
+    }
+
+    .card li b {
+      font-weight: 500
+    }
+
+    .card li span {
+      font-variant-numeric: tabular-nums;
+      text-align: left
+    }
+
+    .card .sum {
+      font-size: .85rem;
+      color: var(--muted)
+    }
+
+    .empty {
+      color: var(--muted)
+    }
+
+    .note {
+      background: var(--warn-soft);
+      color: var(--warn);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: .9rem
+    }
+
+    .tablewrap {
+      overflow-x: auto;
+      margin-top: 14px
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: .9rem;
+      font-variant-numeric: tabular-nums
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 6px 8px;
+      text-align: right;
+      white-space: nowrap
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 500
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    .toast {
+      font-size: .85rem;
+      color: var(--ok)
+    }
+
+    @media (max-width:560px) {
+      .row.item {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) 36px
+      }
+
+      .row.item .nm {
+        grid-column: 1/-1
+      }
+
+      .row.item.headrow .nm {
+        display: none
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <h1>تقسيم حصة السجائر</h1>
+      <p>اكتب نسبة كل شريك والبضاعة اللي استلمتها، والقسمة بتتحسب لوحدها.</p>
+      <div class="units"><span class="chip">كرتونة = 50 خرطوشة</span><span class="chip">خرطوشة = 10 علب</span><span
+          class="chip">كرتونة = 500 علبة</span></div>
+    </header>
+
+    <section>
+      <h2>الشركاء والنسب <span id="pctTotal" class="total"></span></h2>
+      <div class="rows" id="partners"></div>
+      <button class="add" id="addPartner" type="button">+ شريك</button>
+    </section>
+
+    <section>
+      <h2>البضاعة المستلمة</h2>
+      <div class="rows" id="items"></div>
+      <button class="add" id="addItem" type="button">+ صنف</button>
+      <div class="opts">
+        <label for="unit">أصغر وحدة تتقسم:</label>
+        <select id="unit">
+          <option value="10">خرطوشة (من غير فتح الخراطيش)</option>
+          <option value="1">علبة</option>
+          <option value="500">كرتونة (من غير فتح الكراتين)</option>
+        </select>
+      </div>
+    </section>
+
+    <section>
+      <h2>نصيب كل واحد
+        <span class="actions"><span class="toast" id="toast"></span><button class="primary" id="copy" type="button">نسخ
+            للواتساب</button></span>
+      </h2>
+      <div id="warn"></div>
+      <div class="cards" id="result"></div>
+      <div class="tablewrap" id="tableWrap"></div>
+    </section>
+  </div>
+
+  <script>
+    const KEY = 'cig-split-v1';
+    const sample = {
+      partners: [{name: 'المعلم حنا', pct: 40}, {name: 'مينا فايز', pct: 40}, {name: 'كيرلس', pct: 20}],
+      items: [{name: 'كليوباترا', c: 0, k: 0, p: 0}, {name: 'بوكس', c: 0, k: 0, p: 0}, {name: 'سوبر', c: 1, k: 0, p: 0}, {name: 'راوند', c: 1, k: 0, p: 0}],
+      unit: '10'
+    };
+    let state;
+    try {state = JSON.parse(localStorage.getItem(KEY))} catch (e) { }
+    if (!state || !Array.isArray(state.partners)) state = structuredClone(sample);
+
+    const $ = id => document.getElementById(id);
+    const num = v => Math.max(0, Math.floor(Number(v) || 0));
+    const save = () => {try {localStorage.setItem(KEY, JSON.stringify(state))} catch (e) { } };
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+
+    function fmt(packs) {
+      if (!packs) return '—';
+      const c = Math.floor(packs / 500), k = Math.floor(packs % 500 / 10), p = packs % 10, out = [];
+      if (c) out.push(c + ' كرتونة');
+      if (k) out.push(k + ' خرطوشة');
+      if (p) out.push(p + ' علبة');
+      return out.join(' + ');
+    }
+
+    function renderInputs() {
+      $('partners').innerHTML = '<div class="row partner head"><span>الاسم</span><span>النسبة</span><span></span></div>' +
+        state.partners.map((p, i) => `<div class="row partner">
+      <input id="pn${i}" data-k="partners" data-i="${i}" data-f="name" value="${esc(p.name)}" placeholder="اسم الشريك">
+      <div class="pct"><input id="pp${i}" type="number" min="0" step="0.5" inputmode="decimal" data-k="partners" data-i="${i}" data-f="pct" value="${p.pct}"><span>%</span></div>
+      <button class="del" type="button" data-del="partners" data-i="${i}" aria-label="حذف">×</button></div>`).join('');
+      $('items').innerHTML = '<div class="row item head headrow"><span class="nm">الصنف</span><span>كرتونة</span><span>خرطوشة</span><span>علبة</span><span></span></div>' +
+        state.items.map((it, i) => `<div class="row item">
+      <input class="nm" id="in${i}" data-k="items" data-i="${i}" data-f="name" value="${esc(it.name)}" placeholder="اسم الصنف">
+      <input id="ic${i}" type="number" min="0" inputmode="numeric" data-k="items" data-i="${i}" data-f="c" value="${it.c || ''}" placeholder="0" aria-label="كرتونة">
+      <input id="ik${i}" type="number" min="0" inputmode="numeric" data-k="items" data-i="${i}" data-f="k" value="${it.k || ''}" placeholder="0" aria-label="خرطوشة">
+      <input id="ip${i}" type="number" min="0" inputmode="numeric" data-k="items" data-i="${i}" data-f="p" value="${it.p || ''}" placeholder="0" aria-label="علبة">
+      <button class="del" type="button" data-del="items" data-i="${i}" aria-label="حذف">×</button>
+      <div class="itotal" id="it${i}"></div></div>`).join('');
+      $('unit').value = state.unit;
+    }
+
+    /* Largest-remainder split of n units by weights; ties go to the bigger share */
+    function split(n, weights) {
+      const W = weights.reduce((a, b) => a + b, 0);
+      if (!W) return weights.map(() => 0);
+      const raw = weights.map(w => n * w / W), base = raw.map(Math.floor);
+      let left = n - base.reduce((a, b) => a + b, 0);
+      raw.map((r, i) => ({i, f: r - base[i], w: weights[i]})).sort((a, b) => b.f - a.f || b.w - a.w).slice(0, left).forEach(o => base[o.i]++);
+      return base;
+    }
+
+    let lastText = '';
+    function compute() {
+      const P = state.partners, unit = Number(state.unit);
+      const tot = P.reduce((a, p) => a + (Number(p.pct) || 0), 0);
+      const t = $('pctTotal');
+      t.textContent = 'المجموع ' + (+tot.toFixed(2)) + '%';
+      t.className = 'total ' + (Math.abs(tot - 100) < 0.001 ? 'good' : 'bad');
+
+      const weights = P.map(p => Math.max(0, Number(p.pct) || 0));
+      const shares = P.map(() => []), leftovers = [];
+      state.items.forEach((it, i) => {
+        const packs = num(it.c) * 500 + num(it.k) * 10 + num(it.p);
+        const el = $('it' + i); if (el) el.textContent = packs ? 'الإجمالي: ' + fmt(packs) + ' (' + packs + ' علبة)' : '';
+        if (!packs) return;
+        const units = Math.floor(packs / unit), rest = packs - units * unit;
+        split(units, weights).forEach((u, j) => shares[j].push({name: it.name || 'صنف ' + (i + 1), packs: u * unit}));
+        if (rest) leftovers.push({name: it.name || 'صنف ' + (i + 1), packs: rest});
+      });
+
+      let warn = '';
+      if (Math.abs(tot - 100) >= 0.001 && tot > 0) warn += `<p class="note">مجموع النسب ${+tot.toFixed(2)}% مش 100%. القسمة معمولة على أساس نسبة كل واحد من المجموع، فراجع الأرقام.</p>`;
+      if (leftovers.length) warn += `<p class="note">باقي ما اتقسمش (أقل من الوحدة المختارة): ${leftovers.map(l => esc(l.name) + ': ' + fmt(l.packs)).join('، ')}</p>`;
+      $('warn').innerHTML = warn;
+
+      const anyItems = shares.some(s => s.length);
+      if (!P.length || !anyItems || !tot) {$('result').innerHTML = '<p class="empty">أضف شركاء بنسب وأصناف بكميات عشان يظهر التقسيم.</p>'; $('tableWrap').innerHTML = ''; lastText = ''; return }
+
+      const lines = [];
+      $('result').innerHTML = P.map((p, j) => {
+        const total = shares[j].reduce((a, s) => a + s.packs, 0);
+        const nm = p.name || 'شريك ' + (j + 1);
+        lines.push('*' + nm + '* (' + (+(weights[j] / tot * 100).toFixed(2)) + '%)');
+        shares[j].forEach(s => {if (s.packs) lines.push('- ' + s.name + ': ' + fmt(s.packs))});
+        lines.push('');
+        return `<div class="card"><h3>${esc(nm)}<small>${+(weights[j] / tot * 100).toFixed(2)}%</small></h3>
+      <ul>${shares[j].map(s => `<li><b>${esc(s.name)}</b><span>${fmt(s.packs)}</span></li>`).join('')}</ul>
+      <div class="sum">الإجمالي: ${fmt(total)} (${total} علبة)</div></div>`;
+      }).join('');
+      lastText = lines.join('\n').trim();
+
+      const names = state.items.map((it, i) => it.name || 'صنف ' + (i + 1));
+      const active = state.items.map(it => num(it.c) * 500 + num(it.k) * 10 + num(it.p) > 0);
+      $('tableWrap').innerHTML = `<table><thead><tr><th>بالعلبة</th>${names.filter((_, i) => active[i]).map(n => `<th>${esc(n)}</th>`).join('')}<th>الإجمالي</th></tr></thead><tbody>${P.map((p, j) => `<tr><td>${esc(p.name || 'شريك ' + (j + 1))}</td>${shares[j].map(s => `<td>${s.packs}</td>`).join('')}<td><b>${shares[j].reduce((a, s) => a + s.packs, 0)}</b></td></tr>`).join('')
+        }</tbody></table>`;
+    }
+
+    document.addEventListener('input', e => {
+      const d = e.target.dataset;
+      if (d.k) {state[d.k][d.i][d.f] = e.target.value; save(); compute()}
+    });
+    $('unit').addEventListener('change', e => {state.unit = e.target.value; save(); compute()});
+    document.addEventListener('click', e => {
+      const b = e.target.closest('[data-del]');
+      if (b) {state[b.dataset.del].splice(+b.dataset.i, 1); save(); renderInputs(); compute()}
+    });
+    $('addPartner').onclick = () => {state.partners.push({name: '', pct: 0}); save(); renderInputs(); compute(); $('pn' + (state.partners.length - 1)).focus()};
+    $('addItem').onclick = () => {state.items.push({name: '', c: 0, k: 0, p: 0}); save(); renderInputs(); compute(); $('in' + (state.items.length - 1)).focus()};
+    $('copy').onclick = () => {
+      if (!lastText) return;
+      const done = m => {$('toast').textContent = m; setTimeout(() => $('toast').textContent = '', 2000)};
+      navigator.clipboard.writeText(lastText).then(() => done('اتنسخ'), () => {
+        const ta = document.createElement('textarea'); ta.value = lastText; document.body.appendChild(ta); ta.select();
+        try {document.execCommand('copy'); done('اتنسخ')} catch (e) {done('انسخ يدوي')} ta.remove();
+      });
+    };
+    renderInputs(); compute();
+
+    if ('serviceWorker' in navigator) {addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }))}
+  </script>
+</body>
+
+</html>
