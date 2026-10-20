@@ -1,5 +1,5 @@
 // غيّر رقم النسخة مع كل تعديل عشان الموبايلات تاخد التحديث
-const VERSION = "v1";
+const VERSION = "v2";
 const APP_CACHE = "cig-split-app-" + VERSION;
 const FONT_CACHE = "cig-split-fonts";
 const APP_FILES = [
